@@ -1,0 +1,112 @@
+import random
+
+
+def populaatio(chrom_length, population_size):
+    population = []
+    for _ in range(population_size):
+        route = list(random.randint(1, 20) for x in range(chrom_length))  # Generate a route with all town indices
+        random.shuffle(route)  # Shuffle the route randomly
+        population.append(route)
+    return population
+
+
+def calcFitness(chrom):
+    sum = 5 * chrom[0] + 2 * chrom[1] - 7 * chrom[2] + 4 * chrom[3]
+    return abs(78 - sum)
+
+
+def bestFitnessInList(list):
+    ret = list[0]
+    for chroms in list:
+        if calcFitness(chroms) < calcFitness(ret):
+            ret = chroms
+    return ret
+
+
+def mutation(chrom):
+    index1, index2 = random.sample(range(len(chrom)), 2)
+    chrom[index1], chrom[index2] = chrom[index2], chrom[index1]
+
+
+def crossover(parents):
+    dad = parents[0]
+    mom = parents[1]
+    crossoverPoint = random.randint(0, chrom_len)
+
+    child1 = dad[:crossoverPoint] + mom[crossoverPoint:]
+    child2 = mom[:crossoverPoint] + dad[crossoverPoint:]
+    children = [child1, child2]
+
+    return children
+
+
+# VALINTA
+def tournament(population, n, fitness):
+    # Otetaan turnajaisiin 3 ehdokasta
+    num_of_attendees = 3
+    parents = []
+
+    #Käännetään painot jotta mitä lähempänä ollaan nollaa sitä parempi
+    inverted_fitness = [1 / f for f in fitness]
+
+    # luodaan 8 paria
+    for i in range(int(n / 2)):
+
+        attendees = random.choices(population, inverted_fitness, k=num_of_attendees)
+        pairs = random.sample(attendees, k=2)
+
+        # Risteytetäänkö vai kloonataanko
+        if random.random() < p_c:
+            parents.extend(crossover(pairs))
+        else:
+            parents.extend(pairs)
+
+
+    return parents
+
+
+def evolution(population, population_size, fitness):
+    new_population = (tournament(population, population_size, fitness))
+    for x in new_population:
+        if random.random() < p_m:
+            mutation(x)
+
+    return new_population
+
+
+chrom_len = 4
+population_size = 16
+p_c = 0.7
+p_m = 0.001
+iterations = 10
+sovelutuvuudet = []
+solved = 0
+solved_chrom = []
+
+population = populaatio(chrom_len, population_size)
+
+for x in range(iterations):
+    sovelutuvuudet.clear()
+    for y in population:
+        fitness = calcFitness(y)
+        if fitness == 0:
+            print("Nolla löytyi! ")
+            solved_chrom = y
+            print(solved_chrom)
+            print("Kierros oli: ")
+            print(x)
+            solved = 1
+            sovelutuvuudet.append(fitness)
+            break
+        else:
+            sovelutuvuudet.append(fitness)
+
+    if solved == 1:
+        break
+    else:
+
+        population = evolution(population, population_size, sovelutuvuudet)
+
+print(population)
+print("Solvetuvuudet: ")
+print(sovelutuvuudet)
