@@ -1,0 +1,119 @@
+import random
+
+
+etäisyydet = [
+    [0, 340, 619, 1023, 240, 960],  # Ankkapurha
+    [340, 0, 110, 300, 189, 2016],  # Jänishaikula
+    [619, 110, 0, 450, 1190, 290],  # Kontu
+    [1023, 300, 450, 0, 700, 520],  # Jeppelä
+    [240, 189, 1190, 700, 0, 661],  # Peräkorpi
+    [960, 2016, 290, 520, 661, 0]  # Koikkala
+]
+
+
+def populaatio(num_towns, population_size):
+    population = []
+    for _ in range(population_size):
+        route = list(range(num_towns))  
+        random.shuffle(route)  
+        population.append(route)
+    return population
+
+
+def mutaatio(reitti):
+    index1, index2 = random.sample(range(len(reitti)), 2)
+    reitti[index1], reitti[index2] = reitti[index2], reitti[index1]
+
+
+def laskePopulaationSopivuus(populaatio):
+    sopivuus_arvot = []
+    for i in range(len(populaatio)):
+        sopivuus_arvot.append(laskeSopivuus(populaatio[i]))
+    return sopivuus_arvot
+
+
+def laskeSopivuus(reitti):
+    summa = 0
+    for i in range(len(reitti) - 1):
+        lähtö = reitti[i]
+        kohde = reitti[i + 1]
+        summa += etäisyydet[lähtö][kohde]
+    summa += etäisyydet[reitti[-1]][reitti[0]]
+    sopivuus = summa
+    return sopivuus
+
+
+def turnausRuletti(populaatio, sopivuus_arvot):
+    winners = []
+    for x in range(population_size - 4):
+        winners.extend(random.choices(populaatio, weights=sopivuus_arvot, k=1))
+
+    return winners
+
+
+# Isä ja Äiti valitaan
+def roulette_wheel(chroms, sopivuus_arvo):
+    pick = random.choices(chroms, weights=sopivuus_arvo, k=2)
+
+    return pick
+
+
+def risteytys(vanhemmat):
+    tulos = []
+    lapsi1 = []
+    lapsi2 = []
+
+    isä = vanhemmat[0]
+    äiti = vanhemmat[1]
+
+    risteytyksenAlku = random.randint(2, 4)
+
+    lapsi1.extend(isä[:risteytyksenAlku])
+    for town in äiti:
+        if town not in lapsi1:
+            lapsi1.append(town)
+
+    lapsi2.extend(äiti[:risteytyksenAlku])
+    for town in isä:
+        if town not in lapsi2:
+            lapsi2.append(town)
+
+    tulos.append(lapsi1)
+    tulos.append(lapsi2)
+
+    return tulos
+
+
+def luoUusiPopulaatio(voittajat, vanhemmat, lapset):
+    uusiPopulaatio = voittajat + vanhemmat + lapset
+    return uusiPopulaatio
+
+
+# Parametrit
+
+kromosomi = 6
+population_size = 20
+p_c = 0.7
+p_m = 0.001
+bin_size = 6
+population = populaatio(kromosomi, population_size)
+
+# Main loop
+for x in range(3):
+    sopivuus_arvot = laskePopulaationSopivuus(population)
+    voittajat = turnausRuletti(population, sopivuus_arvot)
+    valitut_vanhemmat = roulette_wheel(voittajat, laskePopulaationSopivuus(voittajat))
+    uudet_lapset = risteytys(valitut_vanhemmat)
+
+    for y in range(len(voittajat)):
+        if random.random() < p_m:
+            mutaatio(voittajat[y])
+
+    population = luoUusiPopulaatio(voittajat, valitut_vanhemmat, uudet_lapset)
+
+print(population)
+sopivuus_arvot.sort()
+print(sopivuus_arvot)
+
+
+
